@@ -1,54 +1,45 @@
 name: 测试并发送结果邮件
 on:
-  # 定时触发（可选）
   schedule:
     - cron: '0 18 * * *' # 北京时间凌晨2点运行
-  # 推送触发
   push:
     branches: [ main ]
-  # 手动触发
   workflow_dispatch:
 
 jobs:
   test:
     runs-on: ubuntu-latest
-    # 即使测试失败，也继续执行邮件发送步骤
-    continue-on-error: false
     steps:
-      # 步骤1：拉取代码
       - name: 拉取仓库代码
         uses: actions/checkout@v4
 
-      # 步骤2：配置Node.js环境
       - name: 配置Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
 
-      # 步骤3：安装依赖
       - name: 安装项目依赖
         run: npm install
 
-      # 步骤4：执行测试（捕获结果）
       - name: 执行测试
-        id: run_test # 给步骤命名，用于后续读取结果
+        id: run_test
         run: npm test
-        # 即使测试失败，不中断流程（确保能发送失败邮件）
         continue-on-error: true
 
-      # 步骤5：发送邮件通知（核心）
+      # 核心修改：使用稳定的 mailer-action 发送邮件
       - name: 发送测试结果邮件
-        uses: docker://dongyubin/action-mailer@latest
+        uses: fwalti/mailer-action@v1
         with:
-          # SMTP 配置（从仓库机密变量读取）
-          host: ${{ secrets.EMAIL_HOST }}
-          port: ${{ secrets.EMAIL_PORT }}
-          username: ${{ secrets.EMAIL_USER }}
-          password: ${{ secrets.EMAIL_PASSWORD }}
-          # 邮件内容配置
-          from: "GitHub Actions <${{ secrets.EMAIL_USER }}>" # 发件人名称+邮箱
-          to: ${{ secrets.EMAIL_TO }} # 收件人邮箱
-          subject: "【GitHub Actions】${{ github.repository }} 测试结果：${{ job.status }}" # 邮件标题（包含结果）
+          # SMTP 核心配置（从仓库机密变量读取）
+          smtp_host: ${{ secrets.EMAIL_HOST }}
+          smtp_port: ${{ secrets.EMAIL_PORT }}
+          smtp_username: ${{ secrets.EMAIL_USER }}
+          smtp_password: ${{ secrets.EMAIL_PASSWORD }}
+          smtp_secure: true # 启用 SSL（465 端口必须设为 true）
+          # 邮件内容
+          from: "GitHub Actions <${{ secrets.EMAIL_USER }}>"
+          to: ${{ secrets.EMAIL_TO }}
+          subject: "【GitHub Actions】${{ github.repository }} 测试结果：${{ job.status }}"
           body: |
             ### 测试运行结果
             状态：${{ job.status == 'success' && '✅ 成功' || '❌ 失败' }}
@@ -57,5 +48,4 @@ jobs:
             运行链接：${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
             提交信息：${{ github.event.head_commit.message || '无' }}
             运行时间：${{ github.run_at }}
-        # 无论测试成功/失败，都执行邮件发送
-        if: always()
+        if: always() # 无论结果如何都发送邮件
