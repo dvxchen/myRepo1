@@ -20,6 +20,9 @@ jobs:
           cache: 'npm'
 
       - name: 安装项目依赖
+        run: npm install nodemailer
+        
+      - name: 安装项目依赖
         run: npm install
 
       # 关键：安装 Cypress 系统依赖
