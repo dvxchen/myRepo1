@@ -2,7 +2,7 @@
   "name": "gitaction",
   "version": "1.0.0",
   "scripts": {
-    "test": "jest"  // ✅ 执行 jest 测试
+    "test": "jest"
   },
   "devDependencies": {
     "jest": "^29.7.0"
