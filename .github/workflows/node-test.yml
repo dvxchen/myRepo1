@@ -1,35 +1,35 @@
-name: Cypress 测试并发送失败邮件
+namename: Cypress 测试并发送失败邮件Cypress 测试并发送失败邮件
 on:
   schedule:
     - cron: '0 18 * * *' # 北京时间凌晨2点
   push:
-    branches: [ main ]
+    branches: [ main  main  main  main  main  main  main  main ]
   workflow_dispatch:
 
 jobs:
   cypress-test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latestubuntu-latestubuntu-latestubuntu-latest
     steps:
-      - name: 拉取仓库代码
-        uses: actions/checkout@v4
+      - name: 拉取仓库代码拉取仓库代码拉取仓库代码拉取仓库代码拉取仓库代码拉取仓库代码拉取仓库代码拉取仓库代码
+        uses: actions/checkout@v4actions/checkout@v4actions/checkout@v4actions/checkout@v4
 
-      - name: 配置 Node.js 环境
-        uses: actions/setup-node@v4
+      - name: 配置 Node.js 环境配置 Node.js 环境配置 Node.js 环境配置 Node.js 环境配置 Node.js 环境配置 Node.js 环境配置 Node.js 环境配置 Node.js 环境
+        uses: actions/setup-node@v4actions/setup-node@v4actions/setup-node@v4actions/setup-node@v4
         with:
           node-version: 20
           cache: 'npm'
 
-      - name: 安装项目依赖1
-        run: npm install nodemailer
+      - name: 安装项目依赖1安装项目依赖1安装项目依赖1安装项目依赖1安装项目依赖1安装项目依赖1安装项目依赖1安装项目依赖1
+        run: npm install nodemailernpm install nodemailernpm install nodemailernpm install nodemailer
 
-      - name: 安装项目依赖2
-        run: npm install cypress-multi-reporters mocha-junit-reporter mochawesome --save-dev
+      - name: 安装项目依赖2安装项目依赖2安装项目依赖2安装项目依赖2安装项目依赖2安装项目依赖2安装项目依赖2安装项目依赖2
+        run: npm install cypress-multi-reporters mocha-junit-reporter mochawesome --save-devnpm install cypress-multi-reporters mocha-junit-reporter mochawesome --save-devnpm install cypress-multi-reporters mocha-junit-reporter mochawesome --save-devnpm install cypress-multi-reporters mocha-junit-reporter mochawesome --save-dev
                 
-      - name: 安装项目依赖3
-        run: npm install
+      - name: 安装项目依赖3安装项目依赖3安装项目依赖3安装项目依赖3安装项目依赖3安装项目依赖3安装项目依赖3安装项目依赖3
+        run: npm installnpm installnpm installnpm install
 
       # 关键：安装 Cypress 系统依赖
-      - name: 安装 Cypress 系统依赖
+      - name: 安装 Cypress 系统依赖安装 Cypress 系统依赖安装 Cypress 系统依赖安装 Cypress 系统依赖安装 Cypress 系统依赖安装 Cypress 系统依赖安装 Cypress 系统依赖安装 Cypress 系统依赖
         run: |
           sudo apt-get update
           sudo apt-get install -y libgtk-3-0 libgbm-dev libnss3 libxss1 xvfb
@@ -49,6 +49,11 @@ jobs:
           # 禁用视频（可选，减少耗时）
           CYPRESS_VIDEO: false
 
+      # 
+      - name: 写结果
+        run: npm run report:merge
+             npm run report:generate
+        
       # 发送邮件（携带 Cypress 失败信息）
       - name: 发送测试结果邮件
         run: node send-email.js
