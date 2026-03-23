@@ -2,9 +2,10 @@
   "name": "gitaction",
   "version": "1.0.0",
   "scripts": {
-    "test": "jest"
+    // 替换为 Cypress 运行命令（无头模式，适合 CI/CD）
+    "test": "cypress run"  
   },
   "devDependencies": {
-    "jest": "^29.7.0"
+    "cypress": "^13.6.0"
   }
 }
