@@ -14,16 +14,18 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          # 可选：启用缓存（需确保有 package-lock.json）
-          cache: 'npm'
 
-      - name: 安装依赖（替换 npm ci 为 npm install）
-        run: npm install  # ✅ 用这个，不要用 npm ci
+      - name: 安装项目依赖
+        run: npm install  # 用 npm install 避免锁文件同步问题
 
-      - name: 安装 Cypress 系统依赖
+      # 关键：简化系统依赖安装命令（删除 libasound2 等无效包）
+      - name: 安装 Cypress 核心系统依赖
         run: |
           sudo apt-get update
-          sudo apt-get install -y libgtk2.0-0 libgtk-3-0 libgbm-dev libnotify-dev libgconf-2-4 libnss3 libxss1 libasound2 libxtst6 xauth xvfb
+          sudo apt-get install -y libgtk-3-0 libgbm-dev libnss3 libxss1 xvfb
 
-      - name: 执行测试
+      - name: 执行 Cypress 测试（无头模式）
         run: npm test
+        env:
+          # 强制无头运行，避免图形化依赖问题
+          CYPRESS_HEADLESS: true
