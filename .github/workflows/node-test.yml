@@ -1,8 +1,6 @@
-name: Node.js 自动化测试
+name: Cypress 测试（简化版）
 on:
   push:
-    branches: [ main ]
-  pull_request:
     branches: [ main ]
 
 jobs:
@@ -12,22 +10,11 @@ jobs:
       - name: 拉取代码
         uses: actions/checkout@v4
 
-      - name: 配置 Node.js 环境
-        uses: actions/setup-node@v4
+      # 官方 Cypress Action：自动配置 Node + 系统依赖 + Cypress
+      - name: Cypress 测试
+        uses: cypress-io/github-action@v6
         with:
-          node-version: 20
-
-      - name: 安装依赖
-        run: npm install
-
-      # 关键：安装 Cypress 依赖的系统库（Ubuntu 环境）
-      - name: 安装 Cypress 系统依赖
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libgtk2.0-0 libgtk-3-0 libgbm-dev libnotify-dev libgconf-2-4 libnss3 libxss1 libasound2 libxtst6 xauth xvfb
-
-      - name: 执行 Cypress 测试（无头模式）
-        run: npm test
-        env:
-          # 配置 Cypress 无头运行
-          CYPRESS_BASE_URL: https://www.baidu.com
+          # 执行 Cypress 运行命令
+          command: npm test
+          # 显示测试日志
+          start: echo "启动测试"
