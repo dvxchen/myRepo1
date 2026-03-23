@@ -1,80 +1,82 @@
-namename: Cypress 测试并发送失败邮件Cypress 测试并发送失败邮件
+name: Cypress 捕获详细测试结果
 on:
-  schedule:
-    - cron: '0 18 * * *' # 北京时间凌晨2点
   push:
-    branches: [ main  main  main  main  main  main  main  main ]
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
   cypress-test:
-    runs-on: ubuntu-latestubuntu-latestubuntu-latestubuntu-latest
+    runs-on: ubuntu-latest
     steps:
-      - name: 拉取仓库代码拉取仓库代码拉取仓库代码拉取仓库代码拉取仓库代码拉取仓库代码拉取仓库代码拉取仓库代码
-        uses: actions/checkout@v4actions/checkout@v4actions/checkout@v4actions/checkout@v4
+      - name: 拉取代码
+        uses: actions/checkout@v4
 
-      - name: 配置 Node.js 环境配置 Node.js 环境配置 Node.js 环境配置 Node.js 环境配置 Node.js 环境配置 Node.js 环境配置 Node.js 环境配置 Node.js 环境
-        uses: actions/setup-node@v4actions/setup-node@v4actions/setup-node@v4actions/setup-node@v4
+      - name: 配置 Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: 'npm'
 
-      - name: 安装项目依赖1安装项目依赖1安装项目依赖1安装项目依赖1安装项目依赖1安装项目依赖1安装项目依赖1安装项目依赖1
-        run: npm install nodemailernpm install nodemailernpm install nodemailernpm install nodemailer
+      - name: 安装依赖
+        run: npm install
 
-      - name: 安装项目依赖2安装项目依赖2安装项目依赖2安装项目依赖2安装项目依赖2安装项目依赖2安装项目依赖2安装项目依赖2
-        run: npm install cypress-multi-reporters mocha-junit-reporter mochawesome --save-devnpm install cypress-multi-reporters mocha-junit-reporter mochawesome --save-devnpm install cypress-multi-reporters mocha-junit-reporter mochawesome --save-devnpm install cypress-multi-reporters mocha-junit-reporter mochawesome --save-dev
-                
-      - name: 安装项目依赖3安装项目依赖3安装项目依赖3安装项目依赖3安装项目依赖3安装项目依赖3安装项目依赖3安装项目依赖3
-        run: npm installnpm installnpm installnpm install
-
-      # 关键：安装 Cypress 系统依赖
-      - name: 安装 Cypress 系统依赖安装 Cypress 系统依赖安装 Cypress 系统依赖安装 Cypress 系统依赖安装 Cypress 系统依赖安装 Cypress 系统依赖安装 Cypress 系统依赖安装 Cypress 系统依赖
+      # 安装 Cypress 系统依赖
+      - name: 安装系统依赖
         run: |
           sudo apt-get update
           sudo apt-get install -y libgtk-3-0 libgbm-dev libnss3 libxss1 xvfb
 
-      # 关键：创建 Cypress 结果目录（避免报告写入失败）
-      - name: 创建测试结果目录
-        run: mkdir -p ./cypress/results
+      # 提前创建报告目录（避免写入失败）
+      - name: 创建报告目录
+        run: |
+          mkdir -p ./cypress/results/json
+          mkdir -p ./cypress/results/xml
+          mkdir -p ./cypress/results/html
+          mkdir -p ./cypress/screenshots
+          mkdir -p ./cypress/videos
 
-      # 运行 Cypress 测试（失败不中断，生成 JSON 报告）
+      # 运行 Cypress 测试（生成报告）
       - name: 执行 Cypress 测试
-        id: run_cypress
         run: npm test
-        continue-on-error: true
+        continue-on-error: true # 失败不中断
         env:
-          # Cypress 无头运行（CI 环境必须）
           CYPRESS_HEADLESS: true
-          # 禁用视频（可选，减少耗时）
-          CYPRESS_VIDEO: false
 
-      # 
-      - name: 写结果
-        run: npm run report:merge
-             npm run report:generate
-        
-      # 发送邮件（携带 Cypress 失败信息）
-      - name: 发送测试结果邮件
-        run: node send-email.js
-        env:
-          # 邮箱配置
-          EMAIL_HOST: ${{ secrets.EMAIL_HOST }}
-          EMAIL_PORT: ${{ secrets.EMAIL_PORT }}
-          EMAIL_USER: ${{ secrets.EMAIL_USER }}
-          EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
-          EMAIL_TO: ${{ secrets.EMAIL_TO }}
-          # GitHub 信息
-          GITHUB_REPOSITORY: ${{ github.repository }}
-          JOB_STATUS: ${{ job.status }}
-          GITHUB_RUN_ID: ${{ github.run_id }}
-          GITHUB_EVENT_NAME: ${{ github.event_name }}
-        if: always() # 无论测试成功/失败都发送
+      # （可选）生成 HTML 报告
+      - name: 生成 HTML 报告
+        run: |
+          npm run report:merge
+          npm run report:generate
 
-      # 可选：上传测试报告/截图（方便排查）
-      - name: 上传 Cypress 测试报告
+      # 上传报告/截图/视频到 Actions（方便下载排查）
+      - name: 上传测试结果
         uses: actions/upload-artifact@v4
         with:
           name: cypress-results
-          path: ./cypress/results
+          path: |
+            ./cypress/results
+            ./cypress/screenshots
+            ./cypress/videos
         if: always()
+
+      # 解析报告并输出关键结果（供邮件/通知使用）
+      - name: 解析测试结果
+        id: parse-results
+        run: |
+          # 读取 JSON 报告，提取失败数/通过数
+          FAILURES=$(cat ./cypress/results/json/*.json | jq '.stats.failures')
+          PASSES=$(cat ./cypress/results/json/*.json | jq '.stats.passes')
+          TOTAL=$(cat ./cypress/results/json/*.json | jq '.stats.tests')
+          
+          # 设置为 Actions 输出变量，供后续步骤使用
+          echo "failures=$FAILURES" >> $GITHUB_OUTPUT
+          echo "passes=$PASSES" >> $GITHUB_OUTPUT
+          echo "total=$TOTAL" >> $GITHUB_OUTPUT
+        continue-on-error: true
+
+      # 示例：打印结果（可替换为发送邮件/钉钉通知）
+      - name: 打印测试结果
+        run: |
+          echo "总用例数：${{ steps.parse-results.outputs.total }}"
+          echo "通过数：${{ steps.parse-results.outputs.passes }}"
+          echo "失败数：${{ steps.parse-results.outputs.failures }}"
