@@ -1,31 +1,61 @@
-name: 定时运行 Cypress 测试
+name: 测试并发送结果邮件
 on:
+  # 定时触发（可选）
   schedule:
-    # 北京时间每天凌晨 2 点运行（UTC 18 点）
-    - cron: '0 18 * * *'
-  workflow_dispatch: # 手动触发
+    - cron: '0 18 * * *' # 北京时间凌晨2点运行
+  # 推送触发
+  push:
+    branches: [ main ]
+  # 手动触发
+  workflow_dispatch:
 
 jobs:
-  cypress-test:
+  test:
     runs-on: ubuntu-latest
+    # 即使测试失败，也继续执行邮件发送步骤
+    continue-on-error: false
     steps:
-      - name: 拉取代码
+      # 步骤1：拉取代码
+      - name: 拉取仓库代码
         uses: actions/checkout@v4
 
-      - name: 配置 Node.js
+      # 步骤2：配置Node.js环境
+      - name: 配置Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
 
-      - name: 安装依赖
+      # 步骤3：安装依赖
+      - name: 安装项目依赖
         run: npm install
 
-      - name: 安装 Cypress 核心依赖
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libgtk-3-0 libgbm-dev libnss3 libxss1 xvfb
-
-      - name: 执行 Cypress 测试（无头模式）
+      # 步骤4：执行测试（捕获结果）
+      - name: 执行测试
+        id: run_test # 给步骤命名，用于后续读取结果
         run: npm test
-        env:
-          CYPRESS_HEADLESS: true
+        # 即使测试失败，不中断流程（确保能发送失败邮件）
+        continue-on-error: true
+
+      # 步骤5：发送邮件通知（核心）
+      - name: 发送测试结果邮件
+        uses: docker://dongyubin/action-mailer@latest
+        with:
+          # SMTP 配置（从仓库机密变量读取）
+          host: ${{ secrets.EMAIL_HOST }}
+          port: ${{ secrets.EMAIL_PORT }}
+          username: ${{ secrets.EMAIL_USER }}
+          password: ${{ secrets.EMAIL_PASSWORD }}
+          # 邮件内容配置
+          from: "GitHub Actions <${{ secrets.EMAIL_USER }}>" # 发件人名称+邮箱
+          to: ${{ secrets.EMAIL_TO }} # 收件人邮箱
+          subject: "【GitHub Actions】${{ github.repository }} 测试结果：${{ job.status }}" # 邮件标题（包含结果）
+          body: |
+            ### 测试运行结果
+            状态：${{ job.status == 'success' && '✅ 成功' || '❌ 失败' }}
+            仓库：${{ github.repository }}
+            触发方式：${{ github.event_name == 'schedule' && '定时任务' || github.event_name == 'push' && '代码推送' || '手动触发' }}
+            运行链接：${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+            提交信息：${{ github.event.head_commit.message || '无' }}
+            运行时间：${{ github.run_at }}
+        # 无论测试成功/失败，都执行邮件发送
+        if: always()
