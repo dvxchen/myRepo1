@@ -2,7 +2,7 @@
   "name": "gitaction",
   "version": "1.0.0",
   "scripts": {
-    "test": "cypress run --reporter json --reporter-options output=./cypress/results/test-results.json",
+    "test": "cypress run --reporter json --reporter-options output=./cypress/results/json/cypress-results.json"
     "report:merge": "mochawesome-merge ./cypress/results/json/*.json > ./cypress/results/html/merged-report.json",
     "report:generate": "marge ./cypress/results/html/merged-report.json -o ./cypress/results/html"
   },
