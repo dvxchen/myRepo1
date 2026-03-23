@@ -2,9 +2,22 @@
   "name": "gitaction",
   "version": "1.0.0",
   "scripts": {
-    "test": "cypress run"
+    // 原有脚本（如 Cypress 运行命令）
+    "test": "cypress run --reporter json --reporter-options output=./cypress/results/test-results.json",
+    // 新增：合并 JSON 报告（依赖 mochawesome-merge）
+    "report:merge": "mochawesome-merge ./cypress/results/json/*.json > ./cypress/results/html/merged-report.json",
+    // 新增：生成 HTML 报告（依赖 mochawesome-report-generator，简称 marge）
+    "report:generate": "marge ./cypress/results/html/merged-report.json -o ./cypress/results/html"
   },
   "devDependencies": {
-    "cypress": "^13.6.0"
+    "cypress": "^13.6.0",
+    "cypress-multi-reporters": "^1.6.4",
+    "mocha": "^10.2.0",
+    "mocha-junit-reporter": "^2.2.0",
+    "mochawesome": "^7.1.3",
+    // 必须安装这两个依赖（否则 report:merge/report:generate 会报错）
+    "mochawesome-merge": "^4.3.0",
+    "mochawesome-report-generator": "^6.2.0",
+    "nodemailer": "^6.9.8"
   }
 }
