@@ -2,12 +2,12 @@
   "name": "gitaction",
   "version": "1.0.0",
   "scripts": {
-    // 核心：让 Cypress 生成单个 JSON 报告到指定路径
+    
     "test": "cypress run --reporter json --reporter-options output=./cypress/results/cypress-results.json"
   },
   "devDependencies": {
     "cypress": "^13.6.0",
     "nodemailer": "^6.9.8"
-    // 移除 mochawesome 相关依赖（无需再用）
+    
   }
 }
