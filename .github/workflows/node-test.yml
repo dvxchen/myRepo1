@@ -1,4 +1,4 @@
-name: Cypress 捕获详细测试结果
+name: Cypress 测试 + 邮件通知（无合并）
 on:
   push:
     branches: [ main ]
@@ -26,57 +26,67 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libgtk-3-0 libgbm-dev libnss3 libxss1 xvfb
 
-      # 提前创建报告目录（避免写入失败）
+      # 仅创建单层 results 目录（无需 json/html 子目录）
       - name: 创建报告目录
-        run: |
-          mkdir -p ./cypress/results/json
-          mkdir -p ./cypress/results/xml
-          mkdir -p ./cypress/results/html
-          mkdir -p ./cypress/screenshots
-          mkdir -p ./cypress/videos
+        run: mkdir -p ./cypress/results
 
-      # 运行 Cypress 测试（生成报告）
+      # 运行 Cypress，生成单个 JSON 报告
       - name: 执行 Cypress 测试
         run: npm test
-        continue-on-error: true # 失败不中断
+        continue-on-error: true # 测试失败不中断
         env:
           CYPRESS_HEADLESS: true
 
-      # （可选）生成 HTML 报告
-      - name: 生成 HTML 报告
-        run: |
-          npm run report:merge
-          npm run report:generate
-
-      # 上传报告/截图/视频到 Actions（方便下载排查）
-      - name: 上传测试结果
+      # 上传报告（供排查）
+      - name: 上传测试报告
         uses: actions/upload-artifact@v4
         with:
           name: cypress-results
-          path: |
-            ./cypress/results
-            ./cypress/screenshots
-            ./cypress/videos
+          path: ./cypress/results
         if: always()
 
-      # 解析报告并输出关键结果（供邮件/通知使用）
+      # 解析原生 JSON 报告（关键：直接读取单个文件）
       - name: 解析测试结果
         id: parse-results
         run: |
-          # 读取 JSON 报告，提取失败数/通过数
-          FAILURES=$(cat ./cypress/results/json/*.json | jq '.stats.failures')
-          PASSES=$(cat ./cypress/results/json/*.json | jq '.stats.passes')
-          TOTAL=$(cat ./cypress/results/json/*.json | jq '.stats.tests')
+          # 定义报告文件路径
+          REPORT_FILE="./cypress/results/cypress-results.json"
           
-          # 设置为 Actions 输出变量，供后续步骤使用
+          # 初始化默认值
+          FAILURES=0
+          PASSES=0
+          TOTAL=0
+          
+          # 检查文件是否存在，存在则解析
+          if [ -f "$REPORT_FILE" ]; then
+            # 用 jq 解析原生 JSON 报告（Ubuntu 内置 jq）
+            TOTAL=$(jq '.tests' "$REPORT_FILE")
+            PASSES=$(jq '.passes' "$REPORT_FILE")
+            FAILURES=$(jq '.failures' "$REPORT_FILE")
+          fi
+          
+          # 设置输出变量，供邮件脚本使用
           echo "failures=$FAILURES" >> $GITHUB_OUTPUT
           echo "passes=$PASSES" >> $GITHUB_OUTPUT
           echo "total=$TOTAL" >> $GITHUB_OUTPUT
         continue-on-error: true
 
-      # 示例：打印结果（可替换为发送邮件/钉钉通知）
-      - name: 打印测试结果
-        run: |
-          echo "总用例数：${{ steps.parse-results.outputs.total }}"
-          echo "通过数：${{ steps.parse-results.outputs.passes }}"
-          echo "失败数：${{ steps.parse-results.outputs.failures }}"
+      # 发送邮件（使用解析后的结果）
+      - name: 发送测试结果邮件
+        run: node send-email.js
+        env:
+          # 邮箱配置
+          EMAIL_HOST: ${{ secrets.EMAIL_HOST }}
+          EMAIL_PORT: ${{ secrets.EMAIL_PORT }}
+          EMAIL_USER: ${{ secrets.EMAIL_USER }}
+          EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
+          EMAIL_TO: ${{ secrets.EMAIL_TO }}
+          # 测试结果
+          CYPRESS_TOTAL: ${{ steps.parse-results.outputs.total }}
+          CYPRESS_PASSES: ${{ steps.parse-results.outputs.passes }}
+          CYPRESS_FAILURES: ${{ steps.parse-results.outputs.failures }}
+          # GitHub 基础信息
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_RUN_ID: ${{ github.run_id }}
+          JOB_STATUS: ${{ job.status }}
+        if: always()
