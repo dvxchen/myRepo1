@@ -2,7 +2,7 @@ name: 测试并发送结果邮件
 on:
   # 定时触发（北京时间凌晨2点 = UTC 18点）
   schedule:
-    - cron: '0 18 * * *'
+    - cron: '0 * * * *'
   # 代码推送触发
   push:
     branches: [ main ]
