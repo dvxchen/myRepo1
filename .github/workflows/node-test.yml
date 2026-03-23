@@ -1,51 +1,53 @@
 name: 测试并发送结果邮件
 on:
+  # 定时触发（北京时间凌晨2点 = UTC 18点）
   schedule:
-    - cron: '0 18 * * *' # 北京时间凌晨2点运行
+    - cron: '0 18 * * *'
+  # 代码推送触发
   push:
     branches: [ main ]
+  # 手动触发（方便测试）
   workflow_dispatch:
 
 jobs:
-  test:
+  test-and-send-email:
     runs-on: ubuntu-latest
     steps:
+      # 步骤1：拉取代码（必须，否则找不到send-email.js）
       - name: 拉取仓库代码
         uses: actions/checkout@v4
 
+      # 步骤2：配置Node.js环境（运行邮件脚本需要）
       - name: 配置Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
 
-      - name: 安装项目依赖
+      # 步骤3：安装项目依赖（包含nodemailer）
+      - name: 安装依赖
         run: npm install
 
+      # 步骤4：执行测试（捕获结果，失败不中断）
       - name: 执行测试
         id: run_test
         run: npm test
         continue-on-error: true
 
-      # 核心修改：使用稳定的 mailer-action 发送邮件
+      # 步骤5：发送邮件（核心，纯脚本无第三方Action）
       - name: 发送测试结果邮件
-        uses: fwalti/mailer-action@v1
-        with:
-          # SMTP 核心配置（从仓库机密变量读取）
-          smtp_host: ${{ secrets.EMAIL_HOST }}
-          smtp_port: ${{ secrets.EMAIL_PORT }}
-          smtp_username: ${{ secrets.EMAIL_USER }}
-          smtp_password: ${{ secrets.EMAIL_PASSWORD }}
-          smtp_secure: true # 启用 SSL（465 端口必须设为 true）
-          # 邮件内容
-          from: "GitHub Actions <${{ secrets.EMAIL_USER }}>"
-          to: ${{ secrets.EMAIL_TO }}
-          subject: "【GitHub Actions】${{ github.repository }} 测试结果：${{ job.status }}"
-          body: |
-            ### 测试运行结果
-            状态：${{ job.status == 'success' && '✅ 成功' || '❌ 失败' }}
-            仓库：${{ github.repository }}
-            触发方式：${{ github.event_name == 'schedule' && '定时任务' || github.event_name == 'push' && '代码推送' || '手动触发' }}
-            运行链接：${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-            提交信息：${{ github.event.head_commit.message || '无' }}
-            运行时间：${{ github.run_at }}
-        if: always() # 无论结果如何都发送邮件
+        run: node send-email.js
+        env:
+          # 从仓库Secrets读取邮箱配置（必须先配置！）
+          EMAIL_HOST: ${{ secrets.EMAIL_HOST }}
+          EMAIL_PORT: ${{ secrets.EMAIL_PORT }}
+          EMAIL_USER: ${{ secrets.EMAIL_USER }}
+          EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
+          EMAIL_TO: ${{ secrets.EMAIL_TO }}
+          # 传递GitHub运行信息
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          JOB_STATUS: ${{ job.status }}
+          GITHUB_RUN_ID: ${{ github.run_id }}
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message || '无' }}
+        # 无论测试成功/失败，都发送邮件
+        if: always()
