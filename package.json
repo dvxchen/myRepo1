@@ -2,11 +2,8 @@
   "name": "gitaction",
   "version": "1.0.0",
   "scripts": {
-    
     "test": "cypress run --reporter json --reporter-options output=./cypress/results/test-results.json",
-   
     "report:merge": "mochawesome-merge ./cypress/results/json/*.json > ./cypress/results/html/merged-report.json",
-    
     "report:generate": "marge ./cypress/results/html/merged-report.json -o ./cypress/results/html"
   },
   "devDependencies": {
@@ -15,7 +12,6 @@
     "mocha": "^10.2.0",
     "mocha-junit-reporter": "^2.2.0",
     "mochawesome": "^7.1.3",
-    
     "mochawesome-merge": "^4.3.0",
     "mochawesome-report-generator": "^6.2.0",
     "nodemailer": "^6.9.8"
