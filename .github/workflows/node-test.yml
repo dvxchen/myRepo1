@@ -1,40 +1,33 @@
-# 工作流名称（GitHub 页面显示）
 name: Node.js 自动化测试
-
-# 触发条件：推送到main分支、创建PR到main分支时执行
 on:
   push:
     branches: [ main ]
   pull_request:
     branches: [ main ]
 
-# 定义执行的任务
 jobs:
   test:
-    # 指定运行环境（GitHub提供的Ubuntu虚拟机）
     runs-on: ubuntu-latest
-
-    # 测试多个Node.js版本（避免版本兼容问题）
-    strategy:
-      matrix:
-        node-version: [24.x]  # 按需调整版本
-
     steps:
-      # 步骤1：拉取仓库代码（必须）
       - name: 拉取代码
         uses: actions/checkout@v4
 
-      # 步骤2：设置Node.js环境（官方Action，自动适配版本）
-      - name: 使用Node.js ${{ matrix.node-version }}
+      - name: 配置 Node.js 环境
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node-version }}
-          #cache: 'npm'  # 缓存node_modules，提升安装速度
+          node-version: 20
 
-      # 步骤3：安装项目依赖
       - name: 安装依赖
-        run: npm install  # 用yarn/pnpm的话改成 yarn install / pnpm install
+        run: npm install
 
-      # 步骤4：运行测试（对应package.json中的test脚本）
-      - name: 执行测试
+      # 关键：安装 Cypress 依赖的系统库（Ubuntu 环境）
+      - name: 安装 Cypress 系统依赖
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk2.0-0 libgtk-3-0 libgbm-dev libnotify-dev libgconf-2-4 libnss3 libxss1 libasound2 libxtst6 xauth xvfb
+
+      - name: 执行 Cypress 测试（无头模式）
         run: npm test
+        env:
+          # 配置 Cypress 无头运行
+          CYPRESS_BASE_URL: https://www.baidu.com
