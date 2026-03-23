@@ -1,20 +1,29 @@
-name: Cypress 测试（简化版）
+name: Cypress 端到端测试
 on:
   push:
     branches: [ main ]
 
 jobs:
-  test:
+  cypress-test:
     runs-on: ubuntu-latest
     steps:
       - name: 拉取代码
         uses: actions/checkout@v4
 
-      # 官方 Cypress Action：自动配置 Node + 系统依赖 + Cypress
-      - name: Cypress 测试
-        uses: cypress-io/github-action@v6
+      - name: 配置 Node.js 环境
+        uses: actions/setup-node@v4
         with:
-          # 执行 Cypress 运行命令
-          command: npm test
-          # 显示测试日志
-          start: echo "启动测试"
+          node-version: 20
+          # 可选：启用缓存（需确保有 package-lock.json）
+          cache: 'npm'
+
+      - name: 安装依赖（替换 npm ci 为 npm install）
+        run: npm install  # ✅ 用这个，不要用 npm ci
+
+      - name: 安装 Cypress 系统依赖
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk2.0-0 libgtk-3-0 libgbm-dev libnotify-dev libgconf-2-4 libnss3 libxss1 libasound2 libxtst6 xauth xvfb
+
+      - name: 执行测试
+        run: npm test
