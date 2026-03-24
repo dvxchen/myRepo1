@@ -1,1 +1,200 @@
 
+{
+  "stats": {
+    "suites": 2,
+    "tests": 5,
+    "passes": 3,
+    "failures": 1,
+    "pending": 1,
+    "skipped": 0,
+    "duration": 12500,
+    "start": "2026-03-24T09:15:00.000Z",
+    "end": "2026-03-24T09:15:12.500Z",
+    "testsRegistered": 5,
+    "passPercent": 60,
+    "failPercent": 20,
+    "pendingPercent": 20,
+    "other": 0,
+    "hasOther": false,
+    "skippedPercent": 0
+  },
+  "tests": [
+    {
+      "title": "访问登录页并验证页面元素",
+      "fullTitle": "登录模块 > 访问登录页并验证页面元素",
+      "duration": 1800,
+      "state": "passed",
+      "speed": "normal",
+      "pass": true,
+      "fail": false,
+      "pending": false,
+      "context": "",
+      "code": "cy.visit('/login'); cy.get('#username').should('be.visible'); cy.get('#password').should('be.visible'); cy.get('#login-btn').should('be.visible');",
+      "err": {},
+      "timings": {
+        "lifecycle": 1800,
+        "test": 1500
+      },
+      "attempts": [
+        {
+          "state": "passed",
+          "duration": 1800,
+          "error": {}
+        }
+      ]
+    },
+    {
+      "title": "输入正确账号密码登录",
+      "fullTitle": "登录模块 > 输入正确账号密码登录",
+      "duration": 3200,
+      "state": "passed",
+      "speed": "normal",
+      "pass": true,
+      "fail": false,
+      "pending": false,
+      "context": "",
+      "code": "cy.get('#username').type('test-user'); cy.get('#password').type('123456'); cy.get('#login-btn').click(); cy.url().should('include', '/dashboard');",
+      "err": {},
+      "timings": {
+        "lifecycle": 3200,
+        "test": 2800
+      },
+      "attempts": [
+        {
+          "state": "passed",
+          "duration": 3200,
+          "error": {}
+        }
+      ]
+    },
+    {
+      "title": "输入错误密码登录（断言失败）",
+      "fullTitle": "登录模块 > 输入错误密码登录（断言失败）",
+      "duration": 2500,
+      "state": "failed",
+      "speed": "slow",
+      "pass": false,
+      "fail": true,
+      "pending": false,
+      "context": "",
+      "code": "cy.get('#username').type('test-user'); cy.get('#password').type('wrong-pass'); cy.get('#login-btn').click(); cy.url().should('include', '/dashboard');",
+      "err": {
+        "message": "expected url 'http://localhost:3000/login' to include '/dashboard'",
+        "name": "AssertionError",
+        "stack": "AssertionError: expected url 'http://localhost:3000/login' to include '/dashboard'\n    at Context.eval (webpack:///./cypress/e2e/login.cy.js:25:22)"
+      },
+      "timings": {
+        "lifecycle": 2500,
+        "test": 2200
+      },
+      "attempts": [
+        {
+          "state": "failed",
+          "duration": 2500,
+          "error": {
+            "message": "expected url 'http://localhost:3000/login' to include '/dashboard'",
+            "name": "AssertionError",
+            "stack": "AssertionError: expected url 'http://localhost:3000/login' to include '/dashboard'\n    at Context.eval (webpack:///./cypress/e2e/login.cy.js:25:22)"
+          },
+          "screenshots": [
+            {
+              "name": "输入错误密码登录（断言失败）",
+              "path": "cypress/screenshots/login.cy.js/输入错误密码登录（断言失败） (failed).png",
+              "height": 1080,
+              "width": 1920,
+              "takenAt": "2026-03-24T09:15:08.200Z"
+            }
+          ],
+          "videos": [
+            {
+              "name": "login.cy.js",
+              "path": "cypress/videos/login.cy.js.mp4",
+              "duration": 2500,
+              "size": 1250000
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "登出功能验证",
+      "fullTitle": "首页模块 > 登出功能验证",
+      "duration": 0,
+      "state": "pending",
+      "speed": "pending",
+      "pass": false,
+      "fail": false,
+      "pending": true,
+      "context": "待完善登出接口后执行",
+      "code": "",
+      "err": {},
+      "timings": {
+        "lifecycle": 0,
+        "test": 0
+      },
+      "attempts": []
+    },
+    {
+      "title": "验证首页用户信息展示",
+      "fullTitle": "首页模块 > 验证首页用户信息展示",
+      "duration": 2100,
+      "state": "passed",
+      "speed": "fast",
+      "pass": true,
+      "fail": false,
+      "pending": false,
+      "context": "",
+      "code": "cy.get('#user-avatar').should('be.visible'); cy.get('#user-name').should('contain', 'test-user');",
+      "err": {},
+      "timings": {
+        "lifecycle": 2100,
+        "test": 1900
+      },
+      "attempts": [
+        {
+          "state": "passed",
+          "duration": 2100,
+          "error": {}
+        }
+      ]
+    }
+  ],
+  "suites": [
+    {
+      "title": "登录模块",
+      "fullTitle": "登录模块",
+      "tests": 3,
+      "duration": 7500,
+      "passes": 2,
+      "failures": 1,
+      "pending": 0,
+      "skipped": 0,
+      "passPercent": 66.67,
+      "failPercent": 33.33,
+      "pendingPercent": 0
+    },
+    {
+      "title": "首页模块",
+      "fullTitle": "首页模块",
+      "tests": 2,
+      "duration": 2100,
+      "passes": 1,
+      "failures": 0,
+      "pending": 1,
+      "skipped": 0,
+      "passPercent": 50,
+      "failPercent": 0,
+      "pendingPercent": 50
+    }
+  ],
+  "metadata": {
+    "browserName": "Chrome",
+    "browserVersion": "122.0.0.0",
+    "osName": "macOS",
+    "osVersion": "14.2.1",
+    "cypressVersion": "13.6.0",
+    "nodeVersion": "v20.10.0",
+    "projectId": "abc123",
+    "baseUrl": "http://localhost:3000"
+  }
+}
