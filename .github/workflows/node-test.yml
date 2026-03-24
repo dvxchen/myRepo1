@@ -32,7 +32,7 @@ jobs:
 
       # 3. 安装项目依赖（包括 Cypress）
       - name: Install dependencies
-        run: npm ci
+        run: npm install  # 直接安装，自动同步锁文件
 
       # 4. 运行 Cypress 并生成 JSON 报告
       # 关键：通过 --reporter 指定 JSON 报告格式，--reporter-options 指定输出路径
